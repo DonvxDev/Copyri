@@ -41,11 +41,12 @@ export type FileRecord = {
 };
 
 export function parseTags(tags: string): string[] {
-  return tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+  return tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
 }
 
-export async function insertFile(file: Omit<FileRecord, 'download_count' | 'created_at'>) {
-  const tagsStr = Array.isArray(file.tags) ? (file.tags as string[]).join(',') : (file.tags ?? '');
+export async function insertFile(
+  file: Omit<FileRecord, "download_count" | "created_at">
+) {
   await sql`
     INSERT INTO files (id, name, original_name, blob_url, size, mime_type, title, description, author, license, copyright_year, tags, category)
     VALUES (
@@ -60,22 +61,27 @@ export async function insertFile(file: Omit<FileRecord, 'download_count' | 'crea
       ${file.author},
       ${file.license},
       ${file.copyright_year},
-      ${tagsStr},
+      ${file.tags},
       ${file.category}
     )
   `;
 }
 
-export async function searchFiles(query: string, category?: string): Promise<FileRecord[]> {
-  if (category && category !== 'all') {
+export async function searchFiles(
+  query: string,
+  category?: string
+): Promise<FileRecord[]> {
+  const like = `%${query}%`;
+
+  if (category && category !== "all") {
     const result = await sql<FileRecord>`
       SELECT * FROM files
       WHERE category = ${category}
         AND (
-          title ILIKE ${('%' + query + '%')}
-          OR description ILIKE ${('%' + query + '%')}
-          OR author ILIKE ${('%' + query + '%')}
-          OR tags ILIKE ${('%' + query + '%')}
+          title ILIKE ${like}
+          OR description ILIKE ${like}
+          OR author ILIKE ${like}
+          OR tags ILIKE ${like}
         )
       ORDER BY created_at DESC
       LIMIT 50
@@ -86,10 +92,10 @@ export async function searchFiles(query: string, category?: string): Promise<Fil
   if (query) {
     const result = await sql<FileRecord>`
       SELECT * FROM files
-      WHERE title ILIKE ${('%' + query + '%')}
-        OR description ILIKE ${('%' + query + '%')}
-        OR author ILIKE ${('%' + query + '%')}
-        OR tags ILIKE ${('%' + query + '%')}
+      WHERE title ILIKE ${like}
+        OR description ILIKE ${like}
+        OR author ILIKE ${like}
+        OR tags ILIKE ${like}
       ORDER BY created_at DESC
       LIMIT 50
     `;
