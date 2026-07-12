@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tags = tagsRaw
-      ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean)
-      : [];
+    const tagsStr = tagsRaw
+      ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean).join(",")
+      : "";
 
     const id = generateId();
     const ext = file.name.split(".").pop() ?? "";
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       author,
       license,
       copyright_year: copyrightYear || new Date().getFullYear(),
-      tags,
+      tags: tagsStr,
       category,
     });
 
