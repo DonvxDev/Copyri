@@ -14,7 +14,7 @@ export async function initDB() {
       author TEXT NOT NULL,
       license TEXT NOT NULL,
       copyright_year INTEGER NOT NULL,
-      tags TEXT[] DEFAULT '{}',
+      tags TEXT DEFAULT '',
       category TEXT NOT NULL,
       download_count INTEGER DEFAULT 0,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -34,13 +34,18 @@ export type FileRecord = {
   author: string;
   license: string;
   copyright_year: number;
-  tags: string[];
+  tags: string;
   category: string;
   download_count: number;
   created_at: string;
 };
 
-export async function insertFile(file: Omit<FileRecord, "download_count" | "created_at">) {
+export function parseTags(tags: string): string[] {
+  return tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+}
+
+export async function insertFile(file: Omit<FileRecord, 'download_count' | 'created_at'>) {
+  const tagsStr = Array.isArray(file.tags) ? (file.tags as string[]).join(',') : (file.tags ?? '');
   await sql`
     INSERT INTO files (id, name, original_name, blob_url, size, mime_type, title, description, author, license, copyright_year, tags, category)
     VALUES (
@@ -55,22 +60,22 @@ export async function insertFile(file: Omit<FileRecord, "download_count" | "crea
       ${file.author},
       ${file.license},
       ${file.copyright_year},
-      ${file.tags},
+      ${tagsStr},
       ${file.category}
     )
   `;
 }
 
 export async function searchFiles(query: string, category?: string): Promise<FileRecord[]> {
-  if (category && category !== "all") {
+  if (category && category !== 'all') {
     const result = await sql<FileRecord>`
       SELECT * FROM files
       WHERE category = ${category}
         AND (
-          title ILIKE ${"%" + query + "%"}
-          OR description ILIKE ${"%" + query + "%"}
-          OR author ILIKE ${"%" + query + "%"}
-          OR ${query} = ANY(tags)
+          title ILIKE ${('%' + query + '%')}
+          OR description ILIKE ${('%' + query + '%')}
+          OR author ILIKE ${('%' + query + '%')}
+          OR tags ILIKE ${('%' + query + '%')}
         )
       ORDER BY created_at DESC
       LIMIT 50
@@ -81,10 +86,10 @@ export async function searchFiles(query: string, category?: string): Promise<Fil
   if (query) {
     const result = await sql<FileRecord>`
       SELECT * FROM files
-      WHERE title ILIKE ${"%" + query + "%"}
-        OR description ILIKE ${"%" + query + "%"}
-        OR author ILIKE ${"%" + query + "%"}
-        OR ${query} = ANY(tags)
+      WHERE title ILIKE ${('%' + query + '%')}
+        OR description ILIKE ${('%' + query + '%')}
+        OR author ILIKE ${('%' + query + '%')}
+        OR tags ILIKE ${('%' + query + '%')}
       ORDER BY created_at DESC
       LIMIT 50
     `;
