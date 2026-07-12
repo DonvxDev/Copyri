@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.upload-zone {
+  border: 2px dashed #374151;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: #4f6ef7;
+  background-color: rgba(79, 110, 247, 0.05);
+}
+
+.progress-bar {
+  transition: width 0.3s ease;
+}
